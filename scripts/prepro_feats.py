@@ -71,8 +71,25 @@ def main(params):
     os.mkdir(dir_att)
 
   for i,img in enumerate(imgs):
-    # load the image
-    I = skimage.io.imread(os.path.join(params['images_root'], img['filepath'], img['filename']))
+    # trying to add resume support by skipping if the feature exists
+    input_image_file = os.path.join(params['images_root'], img['filepath'], img['filename'])
+    output_image_fc = os.path.join(dir_fc, str(img['cocoid']))
+    output_image_att = os.path.join(dir_att, str(img['cocoid']))
+    
+    if not(args.force) and os.path.isfile(output_image_fc) and os.path.isfile(output_image_att):
+      print("Skipping image "+ input_image_file + " possibly the feature has been already extracted")
+      continue
+    try:
+      # load the image
+      I = skimage.io.imread(input_image_file)
+    except IOError as e:
+      print("IOError possibly corrupted data "+ input_image_file)
+      continue
+    except:
+      print("Eroor beside IOError occured for image"+ input_image_file +" but continuing")
+      continue
+      
+      
     # handle grayscale input images
     if len(I.shape) == 2:
       I = I[:,:,np.newaxis]
@@ -83,8 +100,8 @@ def main(params):
     I = Variable(preprocess(I), volatile=True)
     tmp_fc, tmp_att = my_resnet(I, params['att_size'])
     # write to pkl
-    np.save(os.path.join(dir_fc, str(img['cocoid'])), tmp_fc.data.cpu().float().numpy())
-    np.savez_compressed(os.path.join(dir_att, str(img['cocoid'])), feat=tmp_att.data.cpu().float().numpy())
+    np.save(output_image_fc, tmp_fc.data.cpu().float().numpy())
+    np.savez_compressed(output_image_att, feat=tmp_att.data.cpu().float().numpy())
 
     if i % 1000 == 0:
       print('processing %d/%d (%.2f%% done)' % (i, N, i*100.0/N))
@@ -103,9 +120,12 @@ if __name__ == "__main__":
   parser.add_argument('--att_size', default=14, type=int, help='14x14 or 7x7')
   parser.add_argument('--model', default='resnet101', type=str, help='resnet101, resnet152')
   parser.add_argument('--model_root', default='./data/imagenet_weights', type=str, help='model root')
+  parser.add_argument('--force', default=False, help='if the features files already exists it will be overwritten',action='store_true')
 
   args = parser.parse_args()
   params = vars(args) # convert to ordinary dict
+  print(args.force)
+  pass
   print('parsed input parameters:')
   print(json.dumps(params, indent = 2))
   main(params)
