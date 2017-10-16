@@ -66,6 +66,7 @@ def train(opt):
         best_val_score = infos.get('best_val_score', None)
 
     model = models.setup(opt)
+    #model = torch.nn.DataParallel(model, device_ids=[0,1,2,3])
     model.cuda()
 
     update_lr_flag = True
