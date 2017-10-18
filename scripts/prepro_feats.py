@@ -75,8 +75,8 @@ def main(params):
     input_image_file = os.path.join(params['images_root'], img['filepath'], img['filename'])
     output_image_fc = os.path.join(dir_fc, str(img['cocoid']))
     output_image_att = os.path.join(dir_att, str(img['cocoid']))
-    
-    if not(args.force) and os.path.isfile(output_image_fc) and os.path.isfile(output_image_att):
+
+    if not(args.force) and os.path.isfile(output_image_fc+".npy") and os.path.isfile(output_image_att+".npz"):
       print("Skipping image "+ input_image_file + " possibly the feature has been already extracted")
       continue
     try:
