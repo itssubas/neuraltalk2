@@ -94,7 +94,7 @@ class Att2inModel(CaptionModel):
         self.logit = nn.Linear(self.rnn_size, self.vocab_size + 1)
         self.ctx2att = nn.Linear(self.att_feat_size, self.att_hid_size)
         self.core = Att2inCore(opt)
-
+        self.cuda = opt.cuda
         self.init_weights()
 
     def init_weights(self):
@@ -217,7 +217,9 @@ class Att2inModel(CaptionModel):
                 else:
                     # scale logprobs by temperature
                     prob_prev = torch.exp(torch.div(logprobs.data, temperature)).cpu()
-                it = torch.multinomial(prob_prev, 1).cuda()
+                    it = torch.multinomial(prob_prev, 1)
+                    if self.cuda:
+                        it = it.cuda()
                 sampleLogprobs = logprobs.gather(1, Variable(it, requires_grad=False)) # gather the logprobs at sampled positions
                 it = it.view(-1).long() # and flatten indices for downstream processing
 

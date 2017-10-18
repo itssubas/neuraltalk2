@@ -66,7 +66,8 @@ def train(opt):
         best_val_score = infos.get('best_val_score', None)
 
     model = models.setup(opt)
-    model.cuda()
+    if opt.cuda:
+        model.cuda()
 
     update_lr_flag = True
     # Assure in training mode
@@ -102,11 +103,15 @@ def train(opt):
         data = loader.get_batch('train')
         print('Read data:', time.time() - start)
 
-        torch.cuda.synchronize()
+        if opt.cuda:
+            torch.cuda.synchronize()
         start = time.time()
 
         tmp = [data['fc_feats'], data['att_feats'], data['labels'], data['masks']]
-        tmp = [Variable(torch.from_numpy(_), requires_grad=False).cuda() for _ in tmp]
+        if opt.cuda:
+            tmp = [Variable(torch.from_numpy(_), requires_grad=False).cuda() for _ in tmp]
+        else:
+            tmp = [Variable(torch.from_numpy(_), requires_grad=False) for _ in tmp]
         fc_feats, att_feats, labels, masks = tmp
         
         optimizer.zero_grad()
@@ -115,7 +120,9 @@ def train(opt):
         utils.clip_gradient(optimizer, opt.grad_clip)
         optimizer.step()
         train_loss = loss.data[0]
-        torch.cuda.synchronize()
+        
+        if opt.cuda:
+            torch.cuda.synchronize()
         end = time.time()
         print("iter {} (epoch {}), train_loss = {:.3f}, time/batch = {:.3f}" \
             .format(iteration, epoch, train_loss, end - start))

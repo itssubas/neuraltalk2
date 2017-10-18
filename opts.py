@@ -101,6 +101,8 @@ def parse_opt():
     parser.add_argument('--train_only', type=int, default=0,
                     help='if true then use 80k, else use 110k')
 
+    parser.add_argument('--cuda', default=False, help='activate or deactivate gpu',action="store_true")
+    
     args = parser.parse_args()
 
     # Check if args are valid
